@@ -1,20 +1,43 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Template to create a Customer Managed Policy and an IAM Role'
+Description: 'Template to create a customer managed IAM policy granting read-only access to an S3 bucket.'
+
+Parameters:
+  BucketName:
+    Type: String
+    Default: '*'
+    Description: 'Name of the S3 bucket to grant read-only access to. Leave as * to allow all buckets.'
 
 Resources:
-  # 1. Create the Customer Managed Policy
+  # Customer managed policy: read-only access to the given S3 bucket
   MyS3ReadManagedPolicy:
     Type: 'AWS::IAM::ManagedPolicy'
     Properties:
       ManagedPolicyName: 'S3BucketReadOnlyPolicy'
-      Description: 'Allows read-only access to a specific S3 bucket'
+      Description: 'Allows read-only access to the specified S3 bucket'
       Path: '/'
       PolicyDocument:
         Version: '2012-10-17'
         Statement:
-          - Effect: 'Allow'
+          # Bucket-level permissions (ListBucket applies to the bucket ARN)
+          - Sid: 'BucketReadAccess'
+            Effect: 'Allow'
+            Action:
+              - 's3:ListBucket'
+              - 's3:GetBucketLocation'
+            Resource:
+              - !Sub 'arn:aws:s3:::${BucketName}'
+          # Object-level permissions (GetObject applies to objects inside the bucket)
+          - Sid: 'ObjectReadAccess'
+            Effect: 'Allow'
             Action:
               - 's3:GetObject'
-              - 's3:ListBucket'
+              - 's3:GetObjectVersion'
             Resource:
-              - '*'
+              - !Sub 'arn:aws:s3:::${BucketName}/*'
+
+Outputs:
+  PolicyArn:
+    Description: 'The ARN of the created managed policy.'
+    Value: !Ref MyS3ReadManagedPolicy
+    Export:
+      Name: !Sub '${AWS::StackName}-PolicyArn'
