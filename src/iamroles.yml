@@ -62,6 +62,21 @@ Resources:
                   - cloudformation:*
                   - iam:PassRole
                 Resource: '*'
+              # Allow CloudFormation (running as this role) to manage IAM policies
+              - Effect: Allow
+                Action:
+                  - iam:CreatePolicy
+                  - iam:DeletePolicy
+                  - iam:GetPolicy
+                  - iam:GetPolicyVersion
+                  - iam:CreatePolicyVersion
+                  - iam:DeletePolicyVersion
+                  - iam:ListPolicyVersions
+                  - iam:SetDefaultPolicyVersion
+                  - iam:TagPolicy
+                  - iam:UntagPolicy
+                Resource: !Sub 'arn:aws:iam::${AWS::AccountId}:policy/*'
+
 Outputs:
   RoleArn:
     Description: 'The Amazon Resource Name (ARN) of the created IAM Role.'
