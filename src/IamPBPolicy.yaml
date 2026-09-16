@@ -1,0 +1,20 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Template to create a Customer Managed Policy and an IAM Role'
+
+Resources:
+  # 1. Create the Customer Managed Policy
+  MyS3ReadManagedPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      ManagedPolicyName: 'S3BucketReadOnlyPolicy'
+      Description: 'Allows read-only access to a specific S3 bucket'
+      Path: '/'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Action:
+              - 's3:GetObject'
+              - 's3:ListBucket'
+            Resource:
+              - '*'
