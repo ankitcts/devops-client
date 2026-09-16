@@ -5,7 +5,7 @@ Resources:
   MyCustomIAMRole:
     Type: 'AWS::IAM::Role'
     Properties:
-      RoleName: 'MyExampleServiceRole'
+      RoleName: 'DevopsClientPipelineRole'
       Description: 'An example IAM role created via CloudFormation with an inline policy.'
       # Trust Policy: Defines who or what can assume this role
       AssumeRolePolicyDocument:
@@ -14,21 +14,54 @@ Resources:
           - Effect: 'Allow'
             Principal:
               Service:
-                - 'ec2.amazonaws.com'
+                - 'codepipeline.amazonaws.com'
+                - 'codebuild.amazonaws.com'          # if the Commands/build action reuses this role
+                - 'cloudformation.amazonaws.com'     # if a CloudFormation deploy action uses it
             Action:
               - 'sts:AssumeRole'
       # Inline Policy: Defines what permissions the role actually has
       Policies:
-        - PolicyName: 'S3ReadOnlyInlinePolicy'
+        - PolicyName: 'CodePipelineServicePolicy'
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
               - Effect: 'Allow'
+                 Action:
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:GetBucketVersioning
+                  - s3:PutObject
+                  - s3:ListBucket
+                Resource:
+                  - 'arn:aws:s3:::codepipeline-us-east-2-*'
+                  - 'arn:aws:s3:::codepipeline-us-east-2-*/*'
+              # GitHub / CodeConnections source
+              - Effect: Allow
                 Action:
-                  - 's3:GetObject'
-                  - 's3:ListBucket'
-                Resource: 
-                  - '*'
+                  - codestar-connections:UseConnection
+                  - codeconnections:UseConnection
+                Resource: '*'
+              # Commands build action (runs on CodeBuild under the hood)
+              - Effect: Allow
+                Action:
+                  - codebuild:BatchGetBuilds
+                  - codebuild:StartBuild
+                  - codebuild:BatchGetBuildBatches
+                  - codebuild:StartBuildBatch
+                Resource: '*'
+              # Logs for the Commands action
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: '*'
+              # Deploy via CloudFormation (add only if you use a CFN deploy stage)
+              - Effect: Allow
+                Action:
+                  - cloudformation:*
+                  - iam:PassRole
+                Resource: '*'
 Outputs:
   RoleArn:
     Description: 'The Amazon Resource Name (ARN) of the created IAM Role.'
