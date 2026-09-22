@@ -41,3 +41,4 @@ Outputs:
     Value: !Ref MyS3ReadManagedPolicy
     Export:
       Name: !Sub '${AWS::StackName}-PolicyArn'
+
